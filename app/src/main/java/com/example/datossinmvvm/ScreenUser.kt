@@ -1,4 +1,5 @@
 package com.example.datossinmvvm
+
 import android.content.Context
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
@@ -10,9 +11,7 @@ import kotlinx.coroutines.launch
 import android.util.Log
 import androidx.compose.material3.TextField
 import androidx.compose.ui.platform.LocalContext
-
 import androidx.compose.material3.*
-
 
 
 @Composable
@@ -57,7 +56,7 @@ fun ScreenUser() {
         )
         Button(
             onClick = {
-                val user = User(0,firstName, lastName)
+                val user = User(0, firstName, lastName)
                 coroutineScope.launch {
                     AgregarUsuario(user = user, dao = dao)
                 }
@@ -65,18 +64,29 @@ fun ScreenUser() {
                 lastName = ""
             }
         ) {
-            Text("Agregar Usuario", fontSize=16.sp)
+            Text("Agregar Usuario", fontSize = 16.sp)
         }
         Button(
             onClick = {
-                val user = User(0,firstName, lastName)
+                val user = User(0, firstName, lastName)
                 coroutineScope.launch {
-                    val data = getUsers( dao = dao)
+                    val data = getUsers(dao = dao)
                     dataUser.value = data
                 }
             }
         ) {
-            Text("Listar Usuarios", fontSize=16.sp)
+            Text("Listar Usuarios", fontSize = 16.sp)
+        }
+        Button(
+            onClick = {
+                coroutineScope.launch {
+                    eliminarUltimoUsuario(dao = dao)
+                    val data = getUsers(dao = dao)
+                    dataUser.value = data
+                }
+            }
+        ) {
+            Text("Eliminar ultimo Usuario", fontSize = 16.sp)
         }
         Text(
             text = dataUser.value, fontSize = 20.sp
@@ -95,24 +105,29 @@ fun crearDatabase(context: Context): UserDatabase {
 
 suspend fun getUsers(dao: UserDao): String {
     var rpta: String = ""
-    //LaunchedEffect(Unit) {
     val users = dao.getAll()
     users.forEach { user ->
         val fila = user.firstName + " - " + user.lastName + "\n"
         rpta += fila
     }
-    //}
     return rpta
 }
 
 suspend fun AgregarUsuario(user: User, dao: UserDao): Unit {
-    //LaunchedEffect(Unit) {
     try {
         dao.insert(user)
+    } catch (e: Exception) {
+        Log.e("User", "Error: insert: ${e.message}")
     }
-    catch (e: Exception) {
-        Log.e("User","Error: insert: ${e.message}")
-    }
-    //}
 }
 
+suspend fun eliminarUltimoUsuario(dao: UserDao) {
+    try {
+        val lastUser = dao.getAll().lastOrNull()
+        lastUser?.let {
+            dao.delete(it)
+        }
+    } catch (e: Exception) {
+        Log.e("User", "Error: delete: ${e.message}")
+    }
+}
